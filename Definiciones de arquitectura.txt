@@ -1,0 +1,43 @@
+## DEFINICIONES DE ARQUITECTURA
+
+### 1. Stack Tecnológico Final
+* **Lenguaje:** Java 21 (LTS)
+* **Framework UI:** JavaFX (Modular) + **AtlantaFX** (Temas/CSS moderno)
+* **Base de Datos:** SQLite (Modo Embedded/Local)
+* **Acceso a Datos:** JDBI (Micro-ORM) o SQL2o (Ligero, JDBC wrapper)
+* **Hardware I/O:** `escpos-coffee` (Impresión Térmica), `jSerialComm` (Lectura Serial/USB)
+* **Empaquetado:** `jpackage` (Imagen nativa optimizada)
+
+### 2. Patrón de Diseño
+**MVC (Model-View-Controller) con Capa de Servicios.**
+* Separación estricta entre la lógica de negocio (Services) y la lógica de presentación (Controllers).
+
+### 3. Estructura de Carpetas
+```text
+src/main/java/com/negocio/pos/
+├── App.java                  // Entry Point
+├── core/                     // DOMINIO (Puro Java)
+│   ├── models/               // Entidades (Producto, Venta)
+│   ├── services/             // Reglas de Negocio (CalculadoraPrecios)
+│   └── exceptions/           // Excepciones personalizadas
+├── data/                     // PERSISTENCIA
+│   ├── database/             // Configuración SQLite (Connection Pool)
+│   └── repositories/         // Queries y DAOs
+├── hardware/                 // INFRAESTRUCTURA
+│   ├── printer/              // Implementación ESC/POS
+│   └── scanner/              // Listeners de entrada
+└── ui/                       // PRESENTACIÓN (JavaFX)
+    ├── controllers/          // Lógica de vista
+    ├── views/                // Archivos .fxml
+    ├── components/           // Widgets reutilizables
+    └── styles/               // CSS
+
+### 4. Justificación
+* Arquitectura Offline-First de baja latencia (<5ms respuesta) que prioriza la velocidad de atención en mostrador y aprovecha el conocimiento experto del equipo en Java.
+
+### 5. Reglas de Oro (No romper)
+* Bloqueo de UI: JAMÁS ejecutar consultas a BD o I/O de hardware en el JavaFX Application Thread. Usar Task<V> o hilos virtuales.
+
+* Gestión de Errores: Las fallas de hardware (impresora desconectada) nunca deben cerrar la aplicación (Crash); deben mostrar una alerta recuperable.
+
+* Inyección de Dependencias: Prohibido instanciar Repositorios o Servicios dentro de los Controladores con new. Usar inyección por constructor o un contexto de aplicación simple.

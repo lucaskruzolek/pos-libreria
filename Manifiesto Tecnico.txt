@@ -1,0 +1,102 @@
+MANIFIESTO TÉCNICO: SISTEMA POS HÍBRIDO (Librería + Copiado)Versión: 2.0 (Incluye Módulo Transaccional)1. VISIÓN DEL PROYECTOSistema de Punto de Venta (POS) de escritorio "Offline-First" para un negocio minorista híbrido.Core Problem: Manejo unificado de stock físico (unitario) y servicios de manufactura (precios por matriz).2. ARQUITECTURA DE SOFTWARELenguaje: Java 21 (LTS).Framework UI: JavaFX + AtlantaFX (Tema Moderno).Patrón: MVC con Capa de Servicios.Persistencia: SQLite (Local) accedido vía JDBI 3 (SQL Object).Build Tool: Maven.Estructura de Carpetas Objetivosrc/main/java/com/libreria/
+1. VISIÓN DEL PROYECTO
+
+Sistema de Punto de Venta (POS) de escritorio "Offline-First" para un negocio minorista híbrido que vende productos físicos (stock unitario) y servicios de manufactura (impresiones/copias con matriz de precios).
+
+2. ARQUITECTURA DE SOFTWARE
+
+Lenguaje: Java 21 (LTS).
+
+Framework UI: JavaFX + AtlantaFX (Tema Moderno).
+
+Patrón: MVC con Capa de Servicios.
+
+Persistencia: SQLite (Local) accedido vía JDBI 3 (SQL Object).
+
+Build Tool: Maven.
+
+Estructura de Carpetas Objetivo
+
+├── App.java                  // Entry Point
+├── core/                     
+│   ├── models/               // Records (Producto, Venta, DetalleVenta)
+│   ├── services/             // Lógica (PrecioCalculatorService, VentaService)
+│   └── exceptions/           
+├── data/                     
+│   ├── config/               // DatabaseManager
+│   └── dao/                  // Interfaces JDBI (@SqlQuery, @SqlUpdate)
+└── ui/                       
+    ├── controllers/          
+    └── views/                
+3. ESQUEMA DE BASE DE DATOS (SQLite) - COMPLETOPRAGMA foreign_keys = ON;
+
+-- A. CATÁLOGOS
+CREATE TABLE categorias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE productos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    categoria_id INTEGER REFERENCES categorias(id),
+    sku_interno TEXT UNIQUE NOT NULL,
+    nombre TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('FISICO', 'SERVICIO')), 
+    precio_base_centavos INTEGER DEFAULT 0,
+    stock_actual INTEGER DEFAULT 0
+);
+
+CREATE TABLE matriz_precios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    servicio_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    tamano TEXT NOT NULL,      -- 'A4', 'OFICIO'
+    tipo_papel TEXT NOT NULL,  -- 'OBRA_80G', 'OPALINA'
+    color TEXT NOT NULL,       -- 'BN', 'COLOR'
+    faz TEXT NOT NULL,         -- 'SIMPLE', 'DOBLE'
+    precio_centavos INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX idx_matriz_unica ON matriz_precios (servicio_id, tamano, tipo_papel, color, faz);
+
+-- B. TRANSACCIONAL (VENTAS)
+CREATE TABLE ventas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total_centavos INTEGER NOT NULL DEFAULT 0,
+    estado TEXT DEFAULT 'COMPLETADA' CHECK (estado IN ('PENDIENTE', 'COMPLETADA', 'ANULADA')),
+    metodo_pago TEXT DEFAULT 'EFECTIVO'
+);
+
+CREATE TABLE detalle_ventas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venta_id INTEGER NOT NULL REFERENCES ventas(id) ON DELETE CASCADE,
+    producto_id INTEGER NOT NULL REFERENCES productos(id),
+    cantidad INTEGER NOT NULL CHECK (cantidad > 0),
+    precio_unitario_centavos INTEGER NOT NULL, -- Snapshot del precio al momento de la venta
+    subtotal_centavos INTEGER NOT NULL,
+    descripcion_linea TEXT -- Ej: "Fotocopia A4 Color"
+);
+4. LÓGICA DE NEGOCIO IMPLEMENTADA (CORE)
+
+Clase: PrecioCalculatorService
+
+Ya existe una implementación aprobada que usa JDBI para consultar la matriz_precios.
+
+Input: Record PrecioRequest (Tamano, TipoPapel, Color, Faz).
+
+Output: Record PrecioResult (centavos).
+
+Validación: Lanza PrecioNoConfiguradoException si la combinación no existe.
+
+5. CONFIGURACIÓN DE BUILD (pom.xml)
+
+Dependencias clave configuradas:
+
+org.openjfx:javafx-controls:21.0.2
+
+io.github.mkpaz:atlantafx-base:2.0.1
+
+org.xerial:sqlite-jdbc:3.45.2.0
+
+org.jdbi:jdbi3-core:3.45.1 & jdbi3-sqlobject
+
+La clase principal definida en el plugin es: com.libreria.App
