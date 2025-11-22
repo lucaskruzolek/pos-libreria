@@ -25,12 +25,12 @@ public class App extends Application {
         // Cargar Tema
         Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
 
-        // Cargar FXML
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/ventasView.fxml"));
+        // Cargar MainLayout
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/MainLayout.fxml"));
         Parent root = loader.load();
 
         Scene scene = new Scene(root);
-        stage.setTitle("POS Librería - Módulo de Ventas");
+        stage.setTitle("POS Librería");
         stage.setMaximized(true); // Iniciar maximizado
         stage.setScene(scene);
         stage.show();

@@ -29,4 +29,8 @@ public class ProductoService {
     public List<Producto> listarProductosActivos() {
         return productoDao.listarActivos();
     }
+
+    public Optional<Producto> buscarPorId(Integer id) {
+        return productoDao.buscarPorId(id);
+    }
 }

@@ -35,7 +35,8 @@ public class VentaService {
                         throw new IllegalArgumentException("Carrito vacío");
 
                 // 1. Calcular Total
-                int total = items.stream().mapToInt(ItemCarrito::calcularSubtotal).sum();
+                boolean esEfectivo = (pago == MetodoPago.EFECTIVO);
+                int total = items.stream().mapToInt(item -> item.calcularSubtotal(esEfectivo)).sum();
 
                 // 2. Determinar Estado Fiscal Inicial
                 EstadoFiscal estadoFiscalInicial = requiereFactura ? EstadoFiscal.PENDIENTE : EstadoFiscal.NO_REQUIERE;
@@ -54,8 +55,8 @@ public class VentaService {
                                                 null, null, // IDs null por ahora
                                                 item.productoId(),
                                                 item.cantidad(),
-                                                item.precioUnitarioCentavos(),
-                                                item.calcularSubtotal(),
+                                                item.getPrecioUnitario(esEfectivo),
+                                                item.calcularSubtotal(esEfectivo),
                                                 item.nombreProducto()))
                                 .collect(Collectors.toList());
 

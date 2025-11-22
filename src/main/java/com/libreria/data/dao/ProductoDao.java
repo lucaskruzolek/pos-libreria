@@ -6,6 +6,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
 import java.util.Optional;
+import java.util.List;
 
 public interface ProductoDao {
 
@@ -20,5 +21,9 @@ public interface ProductoDao {
 
     @SqlQuery("SELECT * FROM productos WHERE activo = 1 ORDER BY nombre ASC")
     @RegisterConstructorMapper(Producto.class)
-    java.util.List<Producto> listarActivos();
+    List<Producto> listarActivos();
+
+    @SqlQuery("SELECT * FROM productos WHERE id = :id")
+    @RegisterConstructorMapper(Producto.class)
+    Optional<Producto> buscarPorId(@Bind("id") Integer id);
 }
